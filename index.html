@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+</head>
+
+<body>
+    <input type="file" id="fileInput" accept=".csv, .xlsx, .xml">
+    <canvas id="chartContainer"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.0/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Adicionando o link CDN do Chart.js -->
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', handleFile);
+
+        function handleFile(event) {
+            const file = event.target.files[0];
+            const fileName = file.name.toLowerCase();
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const contents = e.target.result;
+
+                if (fileName.endsWith('.csv')) {
+                    parseCSV(contents);
+                } else if (fileName.endsWith('.xlsx')) {
+                    parseExcel(contents);
+                } else if (fileName.endsWith('.xml')) {
+                    parseXML(contents);
+                } else {
+                    alert('Formato de arquivo não suportado.');
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        function parseCSV(contents) {
+            Papa.parse(contents, {
+                header: true,
+                complete: function (results) {
+                    // Aqui você pode usar os dados do CSV para gerar o relatório
+                    console.log(results.data);
+                    // Exemplo de criação de gráfico com os dados
+                    generateChart(results.data);
+                }
+            });
+        }
+
+        function parseExcel(contents) {
+            const workbook = XLSX.read(contents, { type: 'binary' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+            // Aqui você pode usar os dados do Excel para gerar o relatório
+            console.log(data);
+            // Exemplo de criação de gráfico com os dados
+            generateChart(data);
+        }
+
+        function parseXML(contents) {
+            // Aqui você pode usar métodos para analisar XML e extrair os dados
+            console.log("Análise de XML ainda não implementada.");
+        }
+
+        function generateChart(data) {
+  const labels = Object.keys(data[0]).slice(1);
+  const totals = Array(labels.length).fill(0);
+
+  // Calcula a soma das colunas
+  data.forEach(row => {
+    for (let i = 1; i < Object.keys(row).length; i++) {
+      totals[i - 1] += parseFloat(row[Object.keys(row)[i]]) || 0; // Adiciona o valor da célula ou 0 se for NaN
+    }
+  });
+
+  const ctx = document.getElementById('chartContainer').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Total',
+        data: totals,
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.5)',
+          'rgba(54, 162, 235, 0.5)',
+          'rgba(255, 206, 86, 0.5)',
+          'rgba(75, 192, 192, 0.5)',
+          'rgba(153, 102, 255, 0.5)',
+          'rgba(255, 159, 64, 0.5)',
+          'rgba(255, 99, 132, 0.5)',
+          'rgba(54, 162, 235, 0.5)',
+          'rgba(255, 206, 86, 0.5)',
+          'rgba(75, 192, 192, 0.5)',
+          'rgba(153, 102, 255, 0.5)',
+          'rgba(255, 159, 64, 0.5)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      aspectRatio: 1,
+      legend: {
+        display: true,
+        position: 'right',
+      },
+      title: {
+        display: true,
+        text: 'Total por Categoria'
+      },
+      animation: {
+        animateScale: true,
+        animateRotate: true
+      }
+    }
+  });
+}
+
+</script>
+</body>
+
+</html>
